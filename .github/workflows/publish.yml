@@ -29,7 +29,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
-          VERSION="$(cargo pkgid | sed 's/.*@//')"
+          VERSION="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
           TAG="${RELEASE_TAG#v}"
 
           if [ "${TAG}" != "${VERSION}" ]; then
