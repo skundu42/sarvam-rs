@@ -286,22 +286,6 @@ Run an example:
 SARVAM_API_KEY=your-key cargo run --example chat
 ```
 
-## Release Automation
-
-This repo includes GitHub Actions workflows for CI and crates.io publishing:
-
-- `.github/workflows/ci.yml` runs `cargo test` and `cargo publish --dry-run` on pushes to `main` and on pull requests.
-- `.github/workflows/publish.yml` publishes to crates.io whenever a GitHub Release is published.
-
-Before using the publish workflow:
-
-1. Create a crates.io API token at [crates.io/me](https://crates.io/me).
-2. Add it to the GitHub repository as the `CARGO_REGISTRY_TOKEN` Actions secret.
-3. Bump the `version` in `Cargo.toml`.
-4. Create a GitHub Release with a tag that matches the crate version, such as `0.2.0` or `v0.2.0`.
-
-The publish workflow validates that the release tag matches `Cargo.toml`, reruns tests, performs `cargo publish --dry-run`, and then publishes the crate.
-
 ## License
 
-MIT
+[License: MIT](./License.md)
