@@ -1,0 +1,50 @@
+name: Publish Crate
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Ensure crates.io token is configured
+        run: |
+          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
+            echo "Missing CARGO_REGISTRY_TOKEN secret."
+            exit 1
+          fi
+
+      - name: Ensure release tag matches Cargo.toml version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          VERSION="$(cargo pkgid | sed 's/.*@//')"
+          TAG="${RELEASE_TAG#v}"
+
+          if [ "${TAG}" != "${VERSION}" ]; then
+            echo "Release tag (${RELEASE_TAG}) does not match crate version (${VERSION})."
+            exit 1
+          fi
+
+      - name: Run test suite
+        run: cargo test
+
+      - name: Check examples
+        run: cargo check --examples
+
+      - name: Verify crate package
+        run: cargo publish --dry-run
+
+      - name: Publish to crates.io
+        run: cargo publish
