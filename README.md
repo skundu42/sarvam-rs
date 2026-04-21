@@ -4,18 +4,25 @@ An unofficial Rust SDK for [Sarvam AI](https://sarvam.ai) APIs — chat completi
 
 ## Installation
 
+
+```toml
+cargo add sarvam-rs
+```
+
+or
+
 Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-sarvam = { package = "sarvam-rs", version = "0.1" }
+sarvam = { package = "sarvam-rs", version = "0.1.1" }
 ```
 
 Streaming support (SSE-based chat streaming and WebSocket-based TTS streaming) is enabled by default. To disable it:
 
 ```toml
 [dependencies]
-sarvam = { package = "sarvam-rs", version = "0.1", default-features = false }
+sarvam = { package = "sarvam-rs", version = "0.1.1", default-features = false }
 ```
 
 ## Quick Start
