@@ -5,7 +5,7 @@ An unofficial Rust SDK for [Sarvam AI](https://sarvam.ai) APIs — chat completi
 ## Installation
 
 
-```toml
+```
 cargo add sarvam-rs
 ```
 
@@ -17,6 +17,9 @@ Add to your `Cargo.toml`:
 [dependencies]
 sarvam = { package = "sarvam-rs", version = "0.2.0" }
 ```
+
+Package name on crates.io: `sarvam-rs`
+Rust import path in code: `sarvam`
 
 Streaming support (SSE-based chat streaming, STT/STTT WebSocket streaming, and WebSocket-based TTS streaming) is enabled by default. To disable it:
 
