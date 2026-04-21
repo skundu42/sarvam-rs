@@ -1,8 +1,5 @@
-use sarvam::{
-    types::*,
-    SarvamClient,
-};
 use base64::Engine;
+use sarvam::{types::*, SarvamClient};
 
 #[tokio::main]
 async fn main() {

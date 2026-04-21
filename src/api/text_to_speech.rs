@@ -18,10 +18,7 @@ impl TextToSpeechApi {
         let response = self
             .client
             .post(&url)
-            .header(
-                "api-subscription-key",
-                &self.config.api_subscription_key,
-            )
+            .header("api-subscription-key", &self.config.api_subscription_key)
             .json(&request)
             .timeout(self.config.timeout)
             .send()

@@ -1,6 +1,6 @@
+use eventsource_stream::Eventsource;
 use futures_core::Stream;
 use futures_util::StreamExt;
-use eventsource_stream::Eventsource;
 
 use crate::error::{Result, SarvamError};
 use crate::types::chat::ChatCompletionChunk;

@@ -1,13 +1,19 @@
 pub mod chat;
 pub mod common;
+pub mod document_intelligence;
+pub mod job;
 pub mod speech_to_text;
+pub mod speech_to_text_batch;
 pub mod text_to_speech;
 pub mod translate;
 pub mod transliterate;
 
 pub use chat::*;
 pub use common::*;
+pub use document_intelligence::*;
+pub use job::*;
 pub use speech_to_text::*;
+pub use speech_to_text_batch::*;
 pub use text_to_speech::*;
 pub use translate::*;
 pub use transliterate::*;

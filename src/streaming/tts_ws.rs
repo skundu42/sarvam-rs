@@ -149,10 +149,7 @@ impl TtsStreamBuilder {
             .await
             .map_err(|e| SarvamError::Custom(format!("WebSocket send error: {}", e)))?;
 
-        Ok(TtsStream {
-            write,
-            read,
-        })
+        Ok(TtsStream { write, read })
     }
 }
 
@@ -296,28 +293,42 @@ impl TtsStream {
                 Ok(Message::Text(text)) => {
                     let parsed: serde_json::Value = match serde_json::from_str(&text) {
                         Ok(v) => v,
-                        Err(e) => return Some(Err(SarvamError::Custom(format!("JSON parse error: {}", e)))),
+                        Err(e) => {
+                            return Some(Err(SarvamError::Custom(format!(
+                                "JSON parse error: {}",
+                                e
+                            ))))
+                        }
                     };
                     let msg_type = parsed.get("type")?.as_str()?.to_string();
                     match msg_type.as_str() {
-                        "audio" => {
-                            match serde_json::from_value::<TtsAudioOutput>(parsed) {
-                                Ok(audio) => return Some(Ok(TtsMessage::Audio(audio))),
-                                Err(e) => return Some(Err(SarvamError::Custom(format!("Audio parse error: {}", e)))),
+                        "audio" => match serde_json::from_value::<TtsAudioOutput>(parsed) {
+                            Ok(audio) => return Some(Ok(TtsMessage::Audio(audio))),
+                            Err(e) => {
+                                return Some(Err(SarvamError::Custom(format!(
+                                    "Audio parse error: {}",
+                                    e
+                                ))))
                             }
-                        }
-                        "event" => {
-                            match serde_json::from_value::<TtsEventResponse>(parsed) {
-                                Ok(event) => return Some(Ok(TtsMessage::Event(event))),
-                                Err(e) => return Some(Err(SarvamError::Custom(format!("Event parse error: {}", e)))),
+                        },
+                        "event" => match serde_json::from_value::<TtsEventResponse>(parsed) {
+                            Ok(event) => return Some(Ok(TtsMessage::Event(event))),
+                            Err(e) => {
+                                return Some(Err(SarvamError::Custom(format!(
+                                    "Event parse error: {}",
+                                    e
+                                ))))
                             }
-                        }
-                        "error" => {
-                            match serde_json::from_value::<TtsErrorResponse>(parsed) {
-                                Ok(error) => return Some(Ok(TtsMessage::Error(error))),
-                                Err(e) => return Some(Err(SarvamError::Custom(format!("Error parse error: {}", e)))),
+                        },
+                        "error" => match serde_json::from_value::<TtsErrorResponse>(parsed) {
+                            Ok(error) => return Some(Ok(TtsMessage::Error(error))),
+                            Err(e) => {
+                                return Some(Err(SarvamError::Custom(format!(
+                                    "Error parse error: {}",
+                                    e
+                                ))))
                             }
-                        }
+                        },
                         other => {
                             return Some(Err(SarvamError::Custom(format!(
                                 "Unknown message type: {}",
@@ -329,10 +340,7 @@ impl TtsStream {
                 Ok(Message::Close(_)) => return None,
                 Ok(_) => continue,
                 Err(e) => {
-                    return Some(Err(SarvamError::Custom(format!(
-                        "WebSocket error: {}",
-                        e
-                    ))));
+                    return Some(Err(SarvamError::Custom(format!("WebSocket error: {}", e))));
                 }
             }
         }

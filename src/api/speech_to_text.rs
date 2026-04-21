@@ -103,10 +103,7 @@ impl SpeechToTextRequestBuilder {
         let response = self
             .client
             .post(&url)
-            .header(
-                "api-subscription-key",
-                &self.config.api_subscription_key,
-            )
+            .header("api-subscription-key", &self.config.api_subscription_key)
             .multipart(form)
             .timeout(self.config.timeout)
             .send()
@@ -140,6 +137,11 @@ impl SpeechToTextApi {
             language_code: None,
             input_audio_codec: None,
         }
+    }
+
+    #[cfg(feature = "streaming")]
+    pub fn stream(&self) -> crate::streaming::SttStreamBuilder {
+        crate::streaming::SttStreamBuilder::new(self.config.clone())
     }
 }
 

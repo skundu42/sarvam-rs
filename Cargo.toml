@@ -1,6 +1,6 @@
 [package]
 name = "sarvam-rs"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.75"
 description = "Rust SDK for Sarvam AI APIs — chat, translation, speech-to-text, text-to-speech, transliteration, and language identification"
@@ -27,10 +27,11 @@ futures-core = { version = "0.3", optional = true }
 futures-util = { version = "0.3", optional = true }
 eventsource-stream = { version = "0.2", optional = true }
 base64 = "0.22"
+urlencoding = { version = "2.1", optional = true }
 
 [features]
 default = ["streaming"]
-streaming = ["dep:tokio-tungstenite", "dep:futures-core", "dep:futures-util", "dep:eventsource-stream", "reqwest/stream"]
+streaming = ["dep:tokio-tungstenite", "dep:futures-core", "dep:futures-util", "dep:eventsource-stream", "dep:urlencoding", "reqwest/stream"]
 
 [[example]]
 name = "chat"
@@ -69,3 +70,25 @@ required-features = ["streaming"]
 name = "text_to_speech_stream"
 path = "examples/text_to_speech_stream.rs"
 required-features = ["streaming"]
+
+[[example]]
+name = "speech_to_text_stream"
+path = "examples/speech_to_text_stream.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "speech_to_text_translate_stream"
+path = "examples/speech_to_text_translate_stream.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "speech_to_text_batch"
+path = "examples/speech_to_text_batch.rs"
+
+[[example]]
+name = "speech_to_text_translate_batch"
+path = "examples/speech_to_text_translate_batch.rs"
+
+[[example]]
+name = "document_intelligence"
+path = "examples/document_intelligence.rs"

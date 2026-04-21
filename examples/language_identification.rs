@@ -1,7 +1,4 @@
-use sarvam::{
-    types::LanguageIdentificationRequest,
-    SarvamClient,
-};
+use sarvam::{types::LanguageIdentificationRequest, SarvamClient};
 
 #[tokio::main]
 async fn main() {

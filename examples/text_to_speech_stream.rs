@@ -1,9 +1,5 @@
-use sarvam::{
-    streaming::TtsMessage,
-    types::*,
-    SarvamClient,
-};
 use base64::Engine;
+use sarvam::{streaming::TtsMessage, types::*, SarvamClient};
 
 #[tokio::main]
 async fn main() {

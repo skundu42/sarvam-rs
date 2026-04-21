@@ -1,7 +1,4 @@
-use sarvam::{
-    types::*,
-    SarvamClient,
-};
+use sarvam::{types::*, SarvamClient};
 
 #[tokio::main]
 async fn main() {

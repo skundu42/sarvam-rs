@@ -1,6 +1,6 @@
 # sarvam-rs
 
-An unofficial Rust SDK for [Sarvam AI](https://sarvam.ai) APIs — chat completions, translation, speech-to-text, text-to-speech, transliteration, and language identification.
+An unofficial Rust SDK for [Sarvam AI](https://sarvam.ai) APIs — chat completions, translation, transliteration, language identification, speech-to-text, speech-to-text batch jobs, speech-to-text WebSocket streaming, text-to-speech, and Document Intelligence job workflows.
 
 ## Installation
 
@@ -15,14 +15,14 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-sarvam = { package = "sarvam-rs", version = "0.1.1" }
+sarvam = { package = "sarvam-rs", version = "0.2.0" }
 ```
 
-Streaming support (SSE-based chat streaming and WebSocket-based TTS streaming) is enabled by default. To disable it:
+Streaming support (SSE-based chat streaming, STT/STTT WebSocket streaming, and WebSocket-based TTS streaming) is enabled by default. To disable it:
 
 ```toml
 [dependencies]
-sarvam = { package = "sarvam-rs", version = "0.1.1", default-features = false }
+sarvam = { package = "sarvam-rs", version = "0.2.0", default-features = false }
 ```
 
 ## Quick Start
@@ -62,6 +62,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## API Reference
+
+### Support Matrix
+
+| Surface | Status | Entry point |
+|---------|--------|-------------|
+| Chat completions | Supported | `client.chat().completions(...)` |
+| Chat streaming | Supported | `client.chat().completions_stream(...)` |
+| Translation | Supported | `client.text().translate(...)` |
+| Transliteration | Supported | `client.text().transliterate(...)` |
+| Language identification | Supported | `client.text().identify_language(...)` |
+| Speech-to-text REST | Supported | `client.speech_to_text().transcribe(...).send()` |
+| Speech-to-text streaming | Supported | `client.speech_to_text().stream().connect()` |
+| Speech-to-text batch | Supported | `client.speech_to_text_batch()` |
+| Speech-to-text translate REST | Supported | `client.speech_to_text_translate().translate(...).send()` |
+| Speech-to-text translate streaming | Supported | `client.speech_to_text_translate().stream().connect()` |
+| Speech-to-text translate batch | Supported | `client.speech_to_text_translate_batch()` |
+| Text-to-speech REST | Supported | `client.text_to_speech().convert(...)` |
+| Text-to-speech streaming | Supported | `client.text_to_speech().stream().connect()` |
+| Document Intelligence | Supported | `client.document_intelligence()` |
 
 ### Client Configuration
 
@@ -211,6 +230,98 @@ let response = client
 println!("{}", response.transcript);
 ```
 
+If you need the dedicated endpoint instead of `mode=translate`:
+
+```rust
+use sarvam::types::speech_to_text::*;
+
+let response = client
+    .speech_to_text_translate()
+    .translate("audio.wav")
+    .model(SpeechToTextTranslateModel::SaarasV2_5)
+    .send()
+    .await?;
+
+println!("{}", response.transcript);
+```
+
+#### Streaming STT (WebSocket)
+
+```rust
+use sarvam::streaming::{
+    SttAudioEncoding, SttMessage, SttStreamingModel, WebSocketSampleRate,
+};
+use sarvam::types::{SpeechToTextLanguage, SttMode};
+
+let audio = std::fs::read("audio.wav")?;
+
+let mut stream = client
+    .speech_to_text()
+    .stream()
+    .model(SttStreamingModel::SaarasV3)
+    .mode(SttMode::Transcribe)
+    .language_code(SpeechToTextLanguage::EnIn)
+    .flush_signal(true)
+    .connect()
+    .await?;
+
+stream
+    .send_audio(audio, SttAudioEncoding::AudioWav, WebSocketSampleRate::Hz16000)
+    .await?;
+stream.flush().await?;
+
+while let Some(message) = stream.next().await {
+    match message? {
+        SttMessage::Transcript(transcript) => {
+            if let Some(text) = transcript.text() {
+                println!("{text}");
+                break;
+            }
+        }
+        SttMessage::Event(event) => println!("event={}", event.event_type),
+        SttMessage::Error(err) => eprintln!("{:?}", err),
+        SttMessage::Raw(raw) => println!("{}", raw),
+    }
+}
+```
+
+#### Batch STT
+
+```rust
+use std::time::Duration;
+use sarvam::types::{
+    CreateSpeechBatchJobRequest, SpeechBatchModel, SpeechBatchUploadUrlsRequest,
+    SpeechToTextBatchJobParameters, SttMode,
+};
+
+let batch = client.speech_to_text_batch();
+
+let job = batch
+    .create_job(CreateSpeechBatchJobRequest {
+        job_parameters: SpeechToTextBatchJobParameters {
+            model: Some(SpeechBatchModel::SaarasV3),
+            mode: Some(SttMode::Transcribe),
+            ..Default::default()
+        },
+        callback: None,
+    })
+    .await?;
+
+let upload_urls = batch
+    .get_upload_urls(SpeechBatchUploadUrlsRequest {
+        job_id: job.job_id.clone(),
+        files: vec!["audio.wav".into()],
+    })
+    .await?;
+
+println!("Upload via presigned URLs: {}", upload_urls.upload_urls.len());
+batch.start_job(&job.job_id).await?;
+let status = batch
+    .wait_until_terminal(&job.job_id, Duration::from_secs(2))
+    .await?;
+println!("Final batch state: {:?}", status.job_state);
+```
+
 ### Text-to-Speech
 
 ```rust
@@ -264,6 +375,48 @@ while let Some(result) = stream.next().await {
 }
 ```
 
+### Document Intelligence
+
+```rust
+use std::time::Duration;
+use sarvam::types::{
+    CreateDocumentIntelligenceJobRequest, DocumentIntelligenceJobParameters,
+    DocumentIntelligenceLanguage, DocumentOutputFormat, DocumentUploadUrlsRequest,
+};
+
+let docs = client.document_intelligence();
+
+let job = docs
+    .create_job(CreateDocumentIntelligenceJobRequest {
+        job_parameters: Some(DocumentIntelligenceJobParameters {
+            language: Some(DocumentIntelligenceLanguage::EnIn),
+            output_format: Some(DocumentOutputFormat::Markdown),
+            ..Default::default()
+        }),
+        callback: None,
+    })
+    .await?;
+
+let upload_urls = docs
+    .get_upload_urls(DocumentUploadUrlsRequest {
+        job_id: job.job_id.clone(),
+        files: vec!["document.pdf".into()],
+    })
+    .await?;
+
+println!("Upload via presigned URLs: {}", upload_urls.upload_urls.len());
+docs.start_job(&job.job_id).await?;
+
+let status = docs
+    .wait_until_terminal(&job.job_id, Duration::from_secs(2))
+    .await?;
+
+if status.job_state.is_success_like() {
+    let downloads = docs.get_download_urls(&job.job_id).await?;
+    println!("Result files: {}", downloads.download_urls.len());
+}
+```
+
 ## Error Handling
 
 All API methods return `Result<T, SarvamError>`:
@@ -288,7 +441,7 @@ The SDK supports 22+ Indic languages across all APIs including Hindi, Bengali, K
 
 | Feature   | Default | Description                                       |
 |-----------|---------|---------------------------------------------------|
-| `streaming` | Yes   | SSE-based chat streaming and WebSocket-based TTS  |
+| `streaming` | Yes   | SSE chat streaming plus STT/STTT/TTS WebSocket clients |
 
 ## Examples
 
@@ -303,8 +456,13 @@ See the [`examples/`](./examples) directory for complete working examples:
 | `language_identification` | Language detection |
 | `speech_to_text` | Audio transcription |
 | `speech_to_text_translate` | Audio transcription + English translation using `mode=translate` |
+| `speech_to_text_stream` | Streaming speech-to-text via WebSocket |
+| `speech_to_text_translate_stream` | Streaming speech-to-text translate via WebSocket |
+| `speech_to_text_batch` | Batch speech-to-text job workflow |
+| `speech_to_text_translate_batch` | Batch speech-to-text translate job workflow |
 | `text_to_speech` | Text-to-audio conversion |
 | `text_to_speech_stream` | Streaming text-to-audio via WebSocket |
+| `document_intelligence` | Document Intelligence job workflow |
 
 Run an example:
 

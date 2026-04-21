@@ -78,10 +78,7 @@ impl SttTranslateRequestBuilder {
         let response = self
             .client
             .post(&url)
-            .header(
-                "api-subscription-key",
-                &self.config.api_subscription_key,
-            )
+            .header("api-subscription-key", &self.config.api_subscription_key)
             .multipart(form)
             .timeout(self.config.timeout)
             .send()
@@ -114,5 +111,10 @@ impl SpeechToTextTranslateApi {
             prompt: None,
             input_audio_codec: None,
         }
+    }
+
+    #[cfg(feature = "streaming")]
+    pub fn stream(&self) -> crate::streaming::SttTranslateStreamBuilder {
+        crate::streaming::SttTranslateStreamBuilder::new(self.config.clone())
     }
 }

@@ -12,16 +12,16 @@ impl ChatApi {
         Self { config, client }
     }
 
-    pub async fn completions(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse> {
+    pub async fn completions(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse> {
         let url = format!("{}/v1/chat/completions", self.config.base_url);
 
         let response = self
             .client
             .post(&url)
-            .header(
-                "api-subscription-key",
-                &self.config.api_subscription_key,
-            )
+            .header("api-subscription-key", &self.config.api_subscription_key)
             .header(
                 "Authorization",
                 format!("Bearer {}", self.config.api_subscription_key),
@@ -56,10 +56,7 @@ impl ChatApi {
         let response = self
             .client
             .post(&url)
-            .header(
-                "api-subscription-key",
-                &self.config.api_subscription_key,
-            )
+            .header("api-subscription-key", &self.config.api_subscription_key)
             .header(
                 "Authorization",
                 format!("Bearer {}", self.config.api_subscription_key),
