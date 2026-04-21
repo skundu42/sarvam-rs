@@ -28,7 +28,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = SarvamClient::new("your-api-key");
 
     let request = ChatCompletionRequest {
-        messages: vec![ChatMessage::user("Hello, how are you?")],
+        messages: vec![ChatMessage::User {
+            content: "Hello, how are you?".to_string(),
+        }],
         model: ChatModel::SarvamM,
         temperature: Some(0.7),
         max_tokens: Some(256),
@@ -71,8 +73,12 @@ use sarvam::types::chat::*;
 
 let request = ChatCompletionRequest {
     messages: vec![
-        ChatMessage::system("You are a helpful assistant."),
-        ChatMessage::user("Explain Rust in one sentence."),
+        ChatMessage::System {
+            content: "You are a helpful assistant.".to_string(),
+        },
+        ChatMessage::User {
+            content: "Explain Rust in one sentence.".to_string(),
+        },
     ],
     model: ChatModel::SarvamM,
     temperature: Some(0.7),
@@ -107,7 +113,11 @@ let request = TranslationRequest {
     input: "नमस्ते दुनिया".to_string(),
     source_language_code: TranslateSourceLanguage::HiIn,
     target_language_code: TranslateTargetLanguage::EnIn,
-    ..Default::default()
+    speaker_gender: None,
+    mode: None,
+    model: None,
+    output_script: None,
+    numerals_format: None,
 };
 
 let response = client.text().translate(request).await?;
@@ -121,9 +131,11 @@ use sarvam::types::transliterate::*;
 
 let request = TransliterationRequest {
     input: "namaste".to_string(),
-    source_language_code: TransliterateSourceLanguage::En,
-    target_language_code: TransliterateTargetLanguage::Hi,
-    ..Default::default()
+    source_language_code: TransliterateSourceLanguage::EnIn,
+    target_language_code: TransliterateTargetLanguage::HiIn,
+    numerals_format: None,
+    spoken_form_numerals_language: None,
+    spoken_form: None,
 };
 
 let response = client.text().transliterate(request).await?;
@@ -177,6 +189,7 @@ println!("{}", response.transcript);
 
 ```rust
 use sarvam::types::text_to_speech::*;
+use base64::Engine;
 
 let request = TextToSpeechRequest {
     text: "Hello, welcome to Sarvam AI.".to_string(),
@@ -194,12 +207,14 @@ std::fs::write("output.wav", audio_bytes)?;
 #### Streaming TTS (WebSocket)
 
 ```rust
+use base64::Engine;
+
 let mut stream = client
     .text_to_speech()
     .stream()
     .model(TextToSpeechModel::BulbulV3)
-    .target_language_code(TextToSpeechLanguage::HiIn)
-    .speaker(TextToSpeechSpeaker::Anushka)
+    .target_language_code(TextToSpeechLanguage::EnIn)
+    .speaker(TextToSpeechSpeaker::Shubh)
     .connect()
     .await?;
 
@@ -210,14 +225,14 @@ while let Some(result) = stream.next().await {
     match result? {
         sarvam::streaming::TtsMessage::Audio(audio) => {
             let bytes = base64::engine::general_purpose::STANDARD
-                .decode(&audio.data.audio_base64)?;
+                .decode(&audio.data.audio)?;
             // process audio bytes
         }
         sarvam::streaming::TtsMessage::Event(event) => {
             println!("{:?}", event);
         }
         sarvam::streaming::TtsMessage::Error(err) => {
-            eprintln!("{}", err.message);
+            eprintln!("{}", err.data.message);
         }
     }
 }

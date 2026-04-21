@@ -313,6 +313,7 @@ pub enum TextToSpeechModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum TextToSpeechOutputAudioCodec {
     Mp3,
     #[serde(rename = "linear16")]
@@ -323,4 +324,25 @@ pub enum TextToSpeechOutputAudioCodec {
     Flac,
     Aac,
     Wav,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TextToSpeechOutputAudioCodec;
+
+    #[test]
+    fn text_to_speech_output_audio_codec_serializes_to_api_values() {
+        assert_eq!(
+            serde_json::to_string(&TextToSpeechOutputAudioCodec::Mp3).unwrap(),
+            "\"mp3\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TextToSpeechOutputAudioCodec::Linear16).unwrap(),
+            "\"linear16\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TextToSpeechOutputAudioCodec::Wav).unwrap(),
+            "\"wav\""
+        );
+    }
 }
