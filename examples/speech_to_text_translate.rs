@@ -1,4 +1,7 @@
-use sarvam::SarvamClient;
+use sarvam::{
+    types::{SpeechToTextLanguage, SpeechToTextModel, SttMode},
+    SarvamClient,
+};
 
 #[tokio::main]
 async fn main() {
@@ -8,8 +11,11 @@ async fn main() {
     let file_path = std::env::var("AUDIO_FILE").unwrap_or_else(|_| "audio.wav".to_string());
 
     let response = client
-        .speech_to_text_translate()
-        .translate(&file_path)
+        .speech_to_text()
+        .transcribe(&file_path)
+        .model(SpeechToTextModel::SaarasV3)
+        .mode(SttMode::Translate)
+        .language_enum(SpeechToTextLanguage::Unknown)
         .send()
         .await
         .unwrap();

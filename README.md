@@ -29,10 +29,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let request = ChatCompletionRequest {
         messages: vec![ChatMessage::User {
-            content: "Hello, how are you?".to_string(),
+            content: "Explain Rust ownership in 3 short bullet points.".to_string(),
         }],
-        model: ChatModel::SarvamM,
-        temperature: Some(0.7),
+        model: ChatModel::Sarvam30b,
+        temperature: Some(0.2),
+        reasoning_effort: Some(ReasoningEffort::Low),
         max_tokens: Some(256),
         ..Default::default()
     };
@@ -40,7 +41,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let response = client.chat().completions(request).await?;
 
     for choice in &response.choices {
-        println!("{}", choice.message.content.as_deref().unwrap_or(""));
+        if let Some(content) = choice.message.content.as_deref() {
+            println!("{content}");
+        } else if let Some(reasoning) = choice.message.reasoning_content.as_deref() {
+            println!("{reasoning}");
+        } else {
+            println!("No visible assistant content returned.");
+        }
     }
 
     Ok(())
@@ -80,9 +87,10 @@ let request = ChatCompletionRequest {
             content: "Explain Rust in one sentence.".to_string(),
         },
     ],
-    model: ChatModel::SarvamM,
-    temperature: Some(0.7),
-    max_tokens: Some(1024),
+    model: ChatModel::Sarvam30b,
+    temperature: Some(0.2),
+    reasoning_effort: Some(ReasoningEffort::Low),
+    max_tokens: Some(256),
     ..Default::default()
 };
 
@@ -90,6 +98,7 @@ let response = client.chat().completions(request).await?;
 ```
 
 Available models: `Sarvam105b`, `Sarvam30b`, `SarvamM`.
+For new workloads, prefer `Sarvam30b` or `Sarvam105b`.
 
 #### Streaming Chat
 
@@ -98,8 +107,12 @@ let mut stream = client.chat().completions_stream(request).await?;
 
 while let Some(result) = stream.next().await {
     let chunk = result?;
-    if let Some(content) = chunk.choices[0].delta.content.as_deref() {
-        print!("{content}");
+    for choice in &chunk.choices {
+        if let Some(content) = choice.delta.content.as_deref() {
+            print!("{content}");
+        } else if let Some(reasoning) = choice.delta.reasoning_content.as_deref() {
+            print!("{reasoning}");
+        }
     }
 }
 ```
@@ -163,8 +176,9 @@ use sarvam::types::speech_to_text::*;
 let response = client
     .speech_to_text()
     .transcribe("audio.wav")
-    .model(SpeechToTextModel::SaarikaV2_5)
-    .language_enum(SpeechToTextLanguage::HiIn)
+    .model(SpeechToTextModel::SaarasV3)
+    .mode(SttMode::Transcribe)
+    .language_enum(SpeechToTextLanguage::Unknown)
     .send()
     .await?;
 
@@ -173,12 +187,17 @@ println!("{}", response.transcript);
 
 ### Speech-to-Text Translate
 
-Transcribe audio and translate to English in one step:
+Transcribe audio and translate to English in one step using the `/speech-to-text` endpoint:
 
 ```rust
+use sarvam::types::speech_to_text::*;
+
 let response = client
-    .speech_to_text_translate()
-    .translate("audio.wav")
+    .speech_to_text()
+    .transcribe("audio.wav")
+    .model(SpeechToTextModel::SaarasV3)
+    .mode(SttMode::Translate)
+    .language_enum(SpeechToTextLanguage::Unknown)
     .send()
     .await?;
 
@@ -276,14 +295,23 @@ See the [`examples/`](./examples) directory for complete working examples:
 | `transliterate` | Text transliteration |
 | `language_identification` | Language detection |
 | `speech_to_text` | Audio transcription |
-| `speech_to_text_translate` | Audio transcription + translation |
+| `speech_to_text_translate` | Audio transcription + English translation using `mode=translate` |
 | `text_to_speech` | Text-to-audio conversion |
 | `text_to_speech_stream` | Streaming text-to-audio via WebSocket |
 
 Run an example:
 
 ```bash
-SARVAM_API_KEY=your-key cargo run --example chat
+export SARVAM_API_KEY='your-key'
+cargo run --example chat
+```
+
+Examples that need an audio file also read `AUDIO_FILE`:
+
+```bash
+export SARVAM_API_KEY='your-key'
+export AUDIO_FILE='audio.wav'
+cargo run --example speech_to_text
 ```
 
 ## License

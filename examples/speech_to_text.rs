@@ -13,8 +13,9 @@ async fn main() {
     let response = client
         .speech_to_text()
         .transcribe(&file_path)
-        .model(SpeechToTextModel::SaarikaV2_5)
-        .language_enum(SpeechToTextLanguage::HiIn)
+        .model(SpeechToTextModel::SaarasV3)
+        .mode(SttMode::Transcribe)
+        .language_enum(SpeechToTextLanguage::Unknown)
         .send()
         .await
         .unwrap();

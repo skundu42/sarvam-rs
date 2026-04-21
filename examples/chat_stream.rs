@@ -1,5 +1,5 @@
 use sarvam::{
-    types::{ChatCompletionRequest, ChatMessage, ChatModel},
+    types::{ChatCompletionRequest, ChatMessage, ChatModel, ReasoningEffort},
     SarvamClient,
 };
 
@@ -10,15 +10,18 @@ async fn main() {
 
     let request = ChatCompletionRequest {
         messages: vec![ChatMessage::User {
-            content: "Tell me a story about a brave knight.".to_string(),
+            content: "Explain Rust ownership in 3 short bullet points.".to_string(),
         }],
-        model: ChatModel::Sarvam105b,
-        temperature: Some(0.7),
+        model: ChatModel::Sarvam30b,
+        temperature: Some(0.2),
+        reasoning_effort: Some(ReasoningEffort::Low),
         stream: Some(true),
+        max_tokens: Some(256),
         ..Default::default()
     };
 
     let mut stream = client.chat().completions_stream(request).await.unwrap();
+    let mut printed_anything = false;
 
     while let Some(result) = stream.next().await {
         match result {
@@ -26,11 +29,20 @@ async fn main() {
                 for choice in &chunk.choices {
                     if let Some(content) = &choice.delta.content {
                         print!("{}", content);
+                        printed_anything = true;
+                    } else if let Some(reasoning) = &choice.delta.reasoning_content {
+                        print!("{}", reasoning);
+                        printed_anything = true;
                     }
                 }
             }
             Err(e) => eprintln!("Error: {}", e),
         }
     }
-    println!();
+
+    if printed_anything {
+        println!();
+    } else {
+        println!("No visible streamed content returned.");
+    }
 }

@@ -3,6 +3,7 @@ use sarvam::{
     types::*,
     SarvamClient,
 };
+use base64::Engine;
 
 #[tokio::main]
 async fn main() {
@@ -29,7 +30,10 @@ async fn main() {
     while let Some(result) = stream.next().await {
         match result {
             Ok(TtsMessage::Audio(audio)) => {
-                println!("Received audio chunk ({} bytes)", audio.data.audio.len());
+                let audio_bytes = base64::engine::general_purpose::STANDARD
+                    .decode(&audio.data.audio)
+                    .expect("Failed to decode base64 audio chunk");
+                println!("Received audio chunk ({} bytes)", audio_bytes.len());
                 audio_chunks.push(audio.data.audio);
             }
             Ok(TtsMessage::Event(event)) => {
