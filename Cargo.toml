@@ -1,0 +1,63 @@
+[package]
+name = "sarvam"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Rust SDK for Sarvam AI APIs — chat, translation, speech-to-text, text-to-speech, transliteration, and language identification"
+license = "MIT"
+keywords = ["sarvam", "ai", "speech", "translation", "indic"]
+categories = ["api-bindings", "multimedia::audio", "text-processing"]
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["sync", "time", "rt", "rt-multi-thread", "macros"] }
+tokio-tungstenite = { version = "0.26", features = ["native-tls"], optional = true }
+futures-core = { version = "0.3", optional = true }
+futures-util = { version = "0.3", optional = true }
+eventsource-stream = { version = "0.2", optional = true }
+base64 = "0.22"
+
+[features]
+default = ["streaming"]
+streaming = ["dep:tokio-tungstenite", "dep:futures-core", "dep:futures-util", "dep:eventsource-stream", "reqwest/stream"]
+
+[[example]]
+name = "chat"
+path = "examples/chat.rs"
+
+[[example]]
+name = "translate"
+path = "examples/translate.rs"
+
+[[example]]
+name = "speech_to_text"
+path = "examples/speech_to_text.rs"
+
+[[example]]
+name = "speech_to_text_translate"
+path = "examples/speech_to_text_translate.rs"
+
+[[example]]
+name = "text_to_speech"
+path = "examples/text_to_speech.rs"
+
+[[example]]
+name = "transliterate"
+path = "examples/transliterate.rs"
+
+[[example]]
+name = "language_identification"
+path = "examples/language_identification.rs"
+
+[[example]]
+name = "chat_stream"
+path = "examples/chat_stream.rs"
+required-features = ["streaming"]
+
+[[example]]
+name = "text_to_speech_stream"
+path = "examples/text_to_speech_stream.rs"
+required-features = ["streaming"]
